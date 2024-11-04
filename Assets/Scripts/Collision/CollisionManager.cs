@@ -6,7 +6,6 @@ using UnityEngine.InputSystem;
 
 public class CollisionManager : MonoBehaviour
 {
-
     private void StandardCollisionResolution()
     {
         Sphere[] spheres = FindObjectsOfType<Sphere>();
