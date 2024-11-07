@@ -1,3 +1,4 @@
+using PlasticGui.Configuration.CloudEdition;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -61,9 +62,8 @@ public static class CollisionDetection
 
         collisionFns[(int)Shape.Sphere, (int)Shape.Sphere] = TestSphereSphere;
         AddCollisionFns(Shape.Sphere, Shape.Plane, TestSpherePlane);
-
-        // TODO: Add additional collider functions here
-
+        AddCollisionFns(Shape.Sphere, Shape.AABB, TestSphereAABB);
+       
         // Static colliders do nothing
         NormalAndPenCalculation nop = (PhysicsCollider _, PhysicsCollider _, out Vector3 n, out float p) => { n = Vector3.zero; p = -1; };
         AddCollisionFns(Shape.OBB, Shape.Plane, nop);
@@ -112,6 +112,39 @@ public static class CollisionDetection
 
     // TODO: YOUR CODE HERE
     // Add new functions for sphere-AABB and sphere-OBB tests.
+    public static void TestSphereAABB(PhysicsCollider s1, PhysicsCollider s2, out Vector3 normal, out float penetration)
+    {
+        Sphere s = s1 as Sphere;
+        AABB b = s2 as AABB;
+
+        Vector3 relativeCenter = b.center - s.Center;
+        Vector3 closest = Vector3.zero;
+
+        if(relativeCenter.x > b.center.x + b.halfWidth.x) closest.x = b.center.x + b.halfWidth.x;
+        else if (relativeCenter.x < b.center.x - b.halfWidth.x) closest.x = b.center.x - b.halfWidth.x;
+        else closest.x = relativeCenter.x;
+
+        if (relativeCenter.y > b.center.y + b.halfWidth.y) closest.y = b.center.y + b.halfWidth.y;
+        else if (relativeCenter.y < b.center.y - b.halfWidth.y) closest.y = b.center.y - b.halfWidth.y;
+        else closest.y = relativeCenter.y;
+
+        if (relativeCenter.z > b.center.z + b.halfWidth.z) closest.z = b.center.z + b.halfWidth.z;
+        else if (relativeCenter.z < b.center.z - b.halfWidth.z) closest.z = b.center.z - b.halfWidth.z;
+        else closest.z = relativeCenter.z;
+
+        Debug.Log(b.center);
+        Debug.Log(s.Center);
+        Debug.Log(relativeCenter);
+        Debug.Log(closest);
+
+        float distance = (closest - relativeCenter).sqrMagnitude;
+
+        normal = (s.Center - closest).normalized;
+        penetration = (s.Radius * s.Radius) - distance;
+        Debug.Log(penetration);
+        Debug.Log(normal);
+    }
+
 
     public static CollisionInfo GetCollisionInfo(PhysicsCollider s1, PhysicsCollider s2)
     {
