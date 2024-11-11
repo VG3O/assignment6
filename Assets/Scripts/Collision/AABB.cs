@@ -18,17 +18,5 @@ public class AABB : PhysicsCollider
         { return 0.5f * transform.localScale; }
     }
 
-    // The minimum point of the bounding box
-    public Vector3 min
-    {
-        get
-        {
-            return -halfWidth;
-        }
-    }
-
-    // equivalent to the extents as previously defined
-    public Vector3 max { get { return halfWidth; } }
-
     public override Shape shape => Shape.AABB;
 }

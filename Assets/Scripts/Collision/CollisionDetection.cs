@@ -63,6 +63,7 @@ public static class CollisionDetection
         collisionFns[(int)Shape.Sphere, (int)Shape.Sphere] = TestSphereSphere;
         AddCollisionFns(Shape.Sphere, Shape.Plane, TestSpherePlane);
         AddCollisionFns(Shape.Sphere, Shape.AABB, TestSphereAABB);
+        AddCollisionFns(Shape.Sphere, Shape.OBB, TestSphereOBB);
        
         // Static colliders do nothing
         NormalAndPenCalculation nop = (PhysicsCollider _, PhysicsCollider _, out Vector3 n, out float p) => { n = Vector3.zero; p = -1; };
@@ -117,32 +118,55 @@ public static class CollisionDetection
         Sphere s = s1 as Sphere;
         AABB b = s2 as AABB;
 
-        Vector3 relativeCenter = b.center - s.Center;
+        Vector3 sphereCenter = s.Center;
         Vector3 closest = Vector3.zero;
 
-        if(relativeCenter.x > b.center.x + b.halfWidth.x) closest.x = b.center.x + b.halfWidth.x;
-        else if (relativeCenter.x < b.center.x - b.halfWidth.x) closest.x = b.center.x - b.halfWidth.x;
-        else closest.x = relativeCenter.x;
+        // iterate over each component of the vector to get the values
+        for (int i = 0; i < 3; i++)
+        {
+            float sphereComp = sphereCenter[i];
+            float centerComp = b.center[i];
+            float halfWidth = b.halfWidth[i];
 
-        if (relativeCenter.y > b.center.y + b.halfWidth.y) closest.y = b.center.y + b.halfWidth.y;
-        else if (relativeCenter.y < b.center.y - b.halfWidth.y) closest.y = b.center.y - b.halfWidth.y;
-        else closest.y = relativeCenter.y;
+            if (sphereComp > centerComp + halfWidth) 
+                closest[i] = centerComp + halfWidth;
+            else if (sphereComp < centerComp - halfWidth) 
+                closest[i] = centerComp - halfWidth;
+            else 
+                closest[i] = sphereComp;
+        }
 
-        if (relativeCenter.z > b.center.z + b.halfWidth.z) closest.z = b.center.z + b.halfWidth.z;
-        else if (relativeCenter.z < b.center.z - b.halfWidth.z) closest.z = b.center.z - b.halfWidth.z;
-        else closest.z = relativeCenter.z;
-
-        Debug.Log(b.center);
-        Debug.Log(s.Center);
-        Debug.Log(relativeCenter);
-        Debug.Log(closest);
-
-        float distance = (closest - relativeCenter).sqrMagnitude;
+        float distance = (closest - sphereCenter).magnitude;
 
         normal = (s.Center - closest).normalized;
-        penetration = (s.Radius * s.Radius) - distance;
-        Debug.Log(penetration);
-        Debug.Log(normal);
+        penetration = s.Radius - distance;
+    }
+
+    public static void TestSphereOBB(PhysicsCollider s1, PhysicsCollider s2, out Vector3 normal, out float penetration)
+    {
+        Sphere s = s1 as Sphere;
+        OBB b = s2 as OBB;
+
+        Vector3 distance = s.Center - b.center;
+
+        Vector3 closest = b.center;
+
+        Vector3[] boxAxes = b.axes;
+
+        for (int i = 0; i < 3; i++)
+        {
+            float dist = Vector3.Dot(distance, boxAxes[i]);
+
+            if (dist > b.halfWidth[i]) dist = b.halfWidth[i];
+            if (dist < -b.halfWidth[i]) dist = -b.halfWidth[i];
+
+            closest += dist * boxAxes[i];
+        }
+
+        float penDistance = (closest - s.Center).magnitude;
+
+        normal = (s.Center - closest).normalized;
+        penetration = s.Radius - penDistance;
     }
 
 
